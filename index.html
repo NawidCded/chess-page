@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lernplattform - Quizlet Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2d7bf7;
+            --secondary: #5867dd;
+            --accent: #00c4b4;
+            --background: #f7f9fc;
+            --card-bg: #ffffff;
+            --text: #131a36;
+            --text-light: #697386;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 25px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 280px;
+            margin: 20px 0;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .memory-card {
+            height: 120px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .memory-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .memory-card.flipped {
+            background: var(--accent);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(45, 123, 247, 0.2);
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #1a5ed4;
+            transform: translateY(-2px);
+        }
+
+        .delete-btn {
+            background: #ff4444;
+        }
+
+        .delete-btn:hover {
+            background: #cc3333;
+        }
+
+        .card-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fafbfc;
+            border-radius: 8px;
+            border: 1px solid #e1e4e8;
+        }
+
+        .card-list div {
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        #score {
+            margin-top: 15px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Karteikarten Sektion -->
+        <div class="section">
+            <h2>Karteikarten</h2>
+            <input id="frontInput" placeholder="Vorderseite eingeben">
+            <input id="backInput" placeholder="Rückseite eingeben">
+            <select id="categoryInput"></select>
+            <div class="btn-group">
+                <button onclick="addFlashcard()">Hinzufügen</button>
+                <button onclick="addNewCategory()">Neue Kategorie</button>
+            </div>
+            
+            <div class="card-list" id="flashcardList"></div>
+            <div id="flashcardContainer"></div>
+            <div class="btn-group">
+                <button onclick="previousCard()">Vorherige</button>
+                <button onclick="nextCard()">Nächste</button>
+                <button onclick="shuffleCards()">Mischen</button>
+                <select id="categoryFilter" onchange="filterCards()"></select>
+            </div>
+        </div>
+
+        <!-- Memory Sektion -->
+        <div class="section">
+            <h2>Memory Spiel</h2>
+            <input id="memoryInput" placeholder="Memory Begriff eingeben">
+            <div class="btn-group">
+                <button onclick="addMemoryCard()">Hinzufügen</button>
+                <button onclick="startMemoryGame()">Spiel starten</button>
+                <button onclick="resetMemory()">Zurücksetzen</button>
+            </div>
+            <div class="card-list" id="memoryList"></div>
+            <div id="memoryGrid" class="memory-grid"></div>
+            <div id="score">Punkte: 0</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialisierung
+        let flashcards = JSON.parse(localStorage.getItem('flashcards')) || [];
+        let categories = JSON.parse(localStorage.getItem('categories')) || ['Allgemein', 'Vokabeln', 'Formeln'];
+        let currentCard = 0;
+        let memoryCards = [];
+        let flippedCards = [];
+        let matchedCards = [];
+        let score = 0;
+
+        // Kategorien laden
+        function updateCategories() {
+            const categoryInput = document.getElementById('categoryInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            categoryInput.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            categoryFilter.innerHTML = `<option value="all">Alle Kategorien</option>` + categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            localStorage.setItem('categories', JSON.stringify(categories));
+        }
+
+        // Neue Kategorie hinzufügen
+        function addNewCategory() {
+            const newCat = prompt('Neue Kategorie eingeben:');
+            if (newCat && !categories.includes(newCat)) {
+                categories.push(newCat);
+                updateCategories();
+            }
+        }
+
+        // Karteikarten Funktionalität
+        function addFlashcard() {
+            const front = document.getElementById('frontInput').value;
+            const back = document.getElementById('backInput').value;
+            const category = document.getElementById('categoryInput').value;
+            if (front && back) {
+                flashcards.push({ front, back, category });
+                document.getElementById('frontInput').value = '';
+                document.getElementById('backInput').value = '';
+                updateFlashcardList();
+                showCard();
+                localStorage.setItem('flashcards', JSON.stringify(flashcards));
+            }
+        }
+
+        function showCard() {
+            const container = document.getElementById('flashcardContainer');
+            if (flashcards.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-light);">Keine Karten vorhanden</p>';
+                return;
+            }
+            container.innerHTML = `
+                <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">${flashcards[currentCard].front}</div>
+                        <div class="flashcard-back">${flashcards[currentCard].back}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateFlashcardList() {
+            const list = document.getElementById('flashcardList');
+            list.innerHTML = flashcards.map((card, index) => `
+                <div>
+                    ${card.front} <span>(${card.category})</span>
+                    <button class="delete-btn" onclick="deleteFlashcard(${index})">Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteFlashcard(index) {
+            flashcards.splice(index, 1);
+            if (currentCard >= flashcards.length) currentCard = flashcards.length - 1;
+            if (currentCard < 0) currentCard = 0;
+            updateFlashcardList();
+            showCard();
+            localStorage.setItem('flashcards', JSON.stringify(flashcards));
+        }
+
+        function nextCard() {
+            currentCard = (currentCard + 1) % flashcards.length;
+            showCard();
+        }
+
+        function previousCard() {
+            currentCard = (currentCard - 1 + flashcards.length) % flashcards.length;
+            showCard();
+        }
+
+        function shuffleCards() {
+            flashcards.sort(() => Math.random() - 0.5);
+            currentCard = 0;
+            updateFlashcardList();
+            showCard();
+            localStorage.setItem('flashcards', JSON.stringify(flashcards));
+        }
+
+        function filterCards() {
+            const category = document.getElementById('categoryFilter').value;
+            const filtered = category === 'all' 
+                ? JSON.parse(localStorage.getItem('flashcards')) || []
+                : flashcards.filter(card => card.category === category);
+            if (filtered.length > 0) {
+                flashcards = filtered;
+                currentCard = 0;
+                updateFlashcardList();
+                showCard();
+            }
+        }
+
+        // Memory Funktionalität
+        function addMemoryCard() {
+            const term = document.getElementById('memoryInput').value;
+            if (term) {
+                memoryCards.push(term);
+                document.getElementById('memoryInput').value = '';
+                updateMemoryList();
+            }
+        }
+
+        function updateMemoryList() {
+            const list = document.getElementById('memoryList');
+            list.innerHTML = memoryCards.map((card, index) => `
+                <div>
+                    ${card}
+                    <button class="delete-btn" onclick="deleteMemoryCard(${index})">Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteMemoryCard(index) {
+            memoryCards.splice(index, 1);
+            updateMemoryList();
+        }
+
+        function startMemoryGame() {
+            if (memoryCards.length < 2) return;
+            
+            const gameCards = [...memoryCards, ...memoryCards]
+                .sort(() => Math.random() - 0.5);
+            const grid = document.getElementById('memoryGrid');
+            grid.innerHTML = '';
+
+            gameCards.forEach((card, index) => {
+                const div = document.createElement('div');
+                div.className = 'memory-card';
+                div.dataset.value = card;
+                div.dataset.index = index;
+                div.onclick = flipCard;
+                grid.appendChild(div);
+            });
+        }
+
+        function flipCard() {
+            if (flippedCards.length >= 2 || this.classList.contains('flipped')) return;
+
+            this.classList.add('flipped');
+            this.textContent = this.dataset.value;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                setTimeout(checkMatch, 1000);
+            }
+        }
+
+        function checkMatch() {
+            if (flippedCards[0].dataset.value === flippedCards[1].dataset.value) {
+                flippedCards.forEach(card => matchedCards.push(card));
+                score += 10;
+                document.getElementById('score').textContent = `Punkte: ${score}`;
+                if (matchedCards.length === memoryCards.length * 2) {
+                    setTimeout(() => alert(`Gewonnen! Endstand: ${score} Punkte`), 500);
+                }
+            } else {
+                flippedCards.forEach(card => {
+                    card.classList.remove('flipped');
+                    card.textContent = '';
+                });
+            }
+            flippedCards = [];
+        }
+
+        function resetMemory() {
+            memoryCards = [];
+            flippedCards = [];
+            matchedCards = [];
+            score = 0;
+            document.getElementById('memoryGrid').innerHTML = '';
+            document.getElementById('score').textContent = 'Punkte: 0';
+            updateMemoryList();
+        }
+
+        // Initialisierung
+        updateCategories();
+        updateFlashcardList();
+        showCard();
+    </script>
+</body>
+</html>
